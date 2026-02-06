@@ -14,7 +14,7 @@
 
     body {
       margin: 0;
-      padding: 16px;
+      padding: 16px 16px 80px; /* espaço extra embaixo para a barra de abas */
       background: #f5f5f7;
       color: #111827;
     }
@@ -227,6 +227,54 @@
       font-size: 0.95rem;
       font-weight: 600;
     }
+
+    /* --- Abas (bottom navigation) --- */
+
+    .tab-section {
+      display: none;
+    }
+
+    .tab-section.active {
+      display: block;
+    }
+
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: #ffffff;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 50;
+      padding: 4px 0;
+    }
+
+    .bottom-nav button {
+      background: transparent;
+      border: none;
+      border-radius: 16px;
+      padding: 4px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      font-size: 0.68rem;
+      color: #6b7280;
+      min-width: 80px;
+    }
+
+    .bottom-nav button span.icon {
+      font-size: 1.2rem;
+    }
+
+    .bottom-nav button.active {
+      background: #eef2ff;
+      color: #4f46e5;
+    }
   </style>
 </head>
 <body>
@@ -238,142 +286,186 @@
       </div>
     </header>
 
-    <!-- FORMULÁRIO -->
-    <section class="card">
-      <div class="section-title">
-        <span>⛽</span> Novo abastecimento
-      </div>
-      <form id="fuelForm">
-        <input type="hidden" id="entryId" />
-        <div class="form-grid">
-          <div>
-            <label for="vehicle">Veículo (nome ou placa)</label>
-            <input id="vehicle" placeholder="Ex: ABC-1234 ou Corolla" required />
+    <!-- ABA: ABASTECIMENTO -->
+    <div id="tab-abastecimento" class="tab-section active">
+      <!-- FORMULÁRIO -->
+      <section class="card">
+        <div class="section-title">
+          <span>⛽</span> Novo abastecimento
+        </div>
+        <form id="fuelForm">
+          <input type="hidden" id="entryId" />
+          <div class="form-grid">
+            <div>
+              <label for="vehicle">Veículo (nome ou placa)</label>
+              <input id="vehicle" placeholder="Ex: ABC-1234 ou Corolla" required />
+            </div>
+            <div>
+              <label for="date">Data do abastecimento</label>
+              <input id="date" type="date" required />
+            </div>
+            <div>
+              <label for="fuelType">Tipo de combustível</label>
+              <select id="fuelType">
+                <option value="Gasolina">Gasolina</option>
+                <option value="Etanol">Etanol</option>
+                <option value="Diesel">Diesel</option>
+                <option value="GNV">GNV</option>
+              </select>
+            </div>
+            <div>
+              <label for="liters">Litros</label>
+              <input id="liters" type="number" step="0.01" min="0" placeholder="Ex: 45,50" required />
+            </div>
+            <div>
+              <label for="total">Total pago (R$)</label>
+              <input id="total" type="number" step="0.01" min="0" placeholder="Ex: 280,00" required />
+            </div>
+            <div>
+              <label for="odometer">Km atual (hodômetro)</label>
+              <input id="odometer" type="number" step="1" min="0" placeholder="Ex: 125430" required />
+            </div>
           </div>
-          <div>
-            <label for="date">Data do abastecimento</label>
-            <input id="date" type="date" required />
+
+          <div class="actions">
+            <button type="button" class="btn-secondary" id="btnClear">Limpar</button>
+            <button type="submit" class="btn-primary" id="btnSave">Salvar abastecimento</button>
           </div>
-          <div>
-            <label for="fuelType">Tipo de combustível</label>
-            <select id="fuelType">
-              <option value="Gasolina">Gasolina</option>
-              <option value="Etanol">Etanol</option>
-              <option value="Diesel">Diesel</option>
-              <option value="GNV">GNV</option>
-            </select>
-          </div>
-          <div>
-            <label for="liters">Litros</label>
-            <input id="liters" type="number" step="0.01" min="0" placeholder="Ex: 45,50" required />
-          </div>
-          <div>
-            <label for="total">Total pago (R$)</label>
-            <input id="total" type="number" step="0.01" min="0" placeholder="Ex: 280,00" required />
-          </div>
-          <div>
-            <label for="odometer">Km atual (hodômetro)</label>
-            <input id="odometer" type="number" step="1" min="0" placeholder="Ex: 125430" required />
+        </form>
+      </section>
+
+      <!-- LISTA -->
+      <section class="card">
+        <div class="section-title">
+          <span>📋</span> Histórico de abastecimentos
+        </div>
+
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <span id="entryCount" style="font-size:0.8rem;color:#6b7280;"></span>
           </div>
         </div>
 
-        <div class="actions">
-          <button type="button" class="btn-secondary" id="btnClear">Limpar</button>
-          <button type="submit" class="btn-primary" id="btnSave">Salvar abastecimento</button>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Veículo</th>
+                <th>Combustível</th>
+                <th>Litros / Total</th>
+                <th>Hodômetro</th>
+                <th>Km entre abastecimentos</th>
+                <th>Preço / L</th>
+                <th>Consumo</th>
+                <th>R$/km</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="entriesTableBody">
+              <!-- linhas via JS -->
+            </tbody>
+          </table>
         </div>
-      </form>
-    </section>
-
-    <!-- LISTA -->
-    <section class="card">
-      <div class="section-title">
-        <span>📋</span> Histórico de abastecimentos
-      </div>
-
-      <div class="toolbar">
-        <div class="toolbar-left">
-          <span id="entryCount" style="font-size:0.8rem;color:#6b7280;"></span>
+        <div class="empty" id="emptyState" style="display:none;">
+          Nenhum abastecimento cadastrado ainda.
         </div>
-      </div>
+      </section>
+    </div>
 
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Data</th>
-              <th>Veículo</th>
-              <th>Combustível</th>
-              <th>Litros / Total</th>
-              <th>Hodômetro</th>
-              <th>Km entre abastecimentos</th>
-              <th>Preço / L</th>
-              <th>Consumo</th>
-              <th>R$/km</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody id="entriesTableBody">
-            <!-- linhas via JS -->
-          </tbody>
-        </table>
-      </div>
-      <div class="empty" id="emptyState" style="display:none;">
-        Nenhum abastecimento cadastrado ainda.
-      </div>
-    </section>
+    <!-- ABA: RESUMO -->
+    <div id="tab-resumo" class="tab-section">
+      <section class="card">
+        <div class="section-title">
+          <span>📆</span> Relatório mensal
+        </div>
 
-    <!-- RELATÓRIO MENSAL -->
-    <section class="card">
-      <div class="section-title">
-        <span>📆</span> Relatório mensal
-      </div>
-
-      <div class="toolbar">
-        <div class="toolbar-left">
-          <div>
-            <label for="reportMonth" style="margin-bottom:2px;">Mês de referência</label>
-            <input id="reportMonth" type="month" />
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <div>
+              <label for="reportMonth" style="margin-bottom:2px;">Mês de referência</label>
+              <input id="reportMonth" type="month" />
+            </div>
+            <div>
+              <label for="reportVehicle" style="margin-bottom:2px;">Veículo</label>
+              <select id="reportVehicle">
+                <option value="all">Todos os veículos</option>
+              </select>
+            </div>
           </div>
-          <div>
-            <label for="reportVehicle" style="margin-bottom:2px;">Veículo</label>
-            <select id="reportVehicle">
-              <option value="all">Todos os veículos</option>
-            </select>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <button type="button" class="btn-secondary btn-small" id="btnExport">Exportar CSV</button>
+            <span class="pill" id="reportInfo">Selecione um mês para ver o resumo.</span>
           </div>
         </div>
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-          <button type="button" class="btn-secondary btn-small" id="btnExport">Exportar CSV</button>
-          <span class="pill" id="reportInfo">Selecione um mês para ver o resumo.</span>
-        </div>
-      </div>
 
-      <div class="summary-grid">
-        <div class="summary-item">
-          <div class="summary-label">Total gasto (R$)</div>
-          <div class="summary-value" id="sumTotal">R$ 0,00</div>
+        <div class="summary-grid">
+          <div class="summary-item">
+            <div class="summary-label">Total gasto (R$)</div>
+            <div class="summary-value" id="sumTotal">R$ 0,00</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">Km rodados</div>
+            <div class="summary-value" id="sumKm">0 km</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">Litros abastecidos</div>
+            <div class="summary-value" id="sumLiters">0 L</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">Média de consumo</div>
+            <div class="summary-value" id="avgKmPerL">0 km/L</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">Custo médio por km</div>
+            <div class="summary-value" id="avgCostPerKm">R$ 0,00 / km</div>
+          </div>
         </div>
-        <div class="summary-item">
-          <div class="summary-label">Km rodados</div>
-          <div class="summary-value" id="sumKm">0 km</div>
+      </section>
+    </div>
+
+    <!-- ABA: CONFIGURAÇÕES -->
+    <div id="tab-config" class="tab-section">
+      <section class="card">
+        <div class="section-title">
+          <span>⚙️</span> Configurações
         </div>
-        <div class="summary-item">
-          <div class="summary-label">Litros abastecidos</div>
-          <div class="summary-value" id="sumLiters">0 L</div>
-        </div>
-        <div class="summary-item">
-          <div class="summary-label">Média de consumo</div>
-          <div class="summary-value" id="avgKmPerL">0 km/L</div>
-        </div>
-        <div class="summary-item">
-          <div class="summary-label">Custo médio por km</div>
-          <div class="summary-value" id="avgCostPerKm">R$ 0,00 / km</div>
-        </div>
-      </div>
-    </section>
+        <p style="font-size:0.9rem;color:#4b5563;">
+          Aqui futuramente podemos incluir:
+        </p>
+        <ul style="font-size:0.9rem;color:#4b5563; padding-left:18px;">
+          <li>Botão para apagar todos os dados (reset anual).</li>
+          <li>Opção de tema claro/escuro.</li>
+          <li>Backup e restauração dos dados.</li>
+        </ul>
+        <p style="font-size:0.85rem;color:#6b7280;">
+          Por enquanto é só um espaço reservado para as próximas versões. 😉
+        </p>
+      </section>
+    </div>
   </div>
+
+  <!-- Barra de abas inferior -->
+  <nav class="bottom-nav">
+    <button type="button" data-tab="abastecimento" class="active">
+      <span class="icon">⛽</span>
+      <span>Abastecer</span>
+    </button>
+    <button type="button" data-tab="resumo">
+      <span class="icon">📊</span>
+      <span>Resumo</span>
+    </button>
+    <button type="button" data-tab="config">
+      <span class="icon">⚙️</span>
+      <span>Config.</span>
+    </button>
+  </nav>
 
   <script>
     const STORAGE_KEY = "carExpensesEntries";
+    const ACTIVE_TAB_KEY = "carExpensesActiveTab";
+
+    /* ---------- Dados / Utilitários ---------- */
 
     function loadEntries() {
       try {
@@ -479,6 +571,8 @@
       document.getElementById("odometer").value = entry.odometer ?? "";
       document.getElementById("btnSave").textContent = "Atualizar abastecimento";
 
+      // garante que a aba abastecimento esteja ativa ao editar
+      setActiveTab("abastecimento");
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
@@ -492,6 +586,8 @@
       renderVehicleFilter();
       updateReport();
     }
+
+    /* ---------- Renderizações ---------- */
 
     function renderEntries() {
       const tbody = document.getElementById("entriesTableBody");
@@ -753,7 +849,47 @@
       URL.revokeObjectURL(url);
     }
 
-    // Eventos
+    /* ---------- Abas (navegação) ---------- */
+
+    function setActiveTab(tabName) {
+      const sections = {
+        abastecimento: document.getElementById("tab-abastecimento"),
+        resumo: document.getElementById("tab-resumo"),
+        config: document.getElementById("tab-config")
+      };
+
+      Object.keys(sections).forEach(key => {
+        sections[key].classList.toggle("active", key === tabName);
+      });
+
+      document
+        .querySelectorAll(".bottom-nav button")
+        .forEach(btn => {
+          btn.classList.toggle(
+            "active",
+            btn.getAttribute("data-tab") === tabName
+          );
+        });
+
+      localStorage.setItem(ACTIVE_TAB_KEY, tabName);
+    }
+
+    function initTabs() {
+      const saved = localStorage.getItem(ACTIVE_TAB_KEY) || "abastecimento";
+      setActiveTab(saved);
+
+      document
+        .querySelectorAll(".bottom-nav button")
+        .forEach(btn => {
+          btn.addEventListener("click", () => {
+            const tab = btn.getAttribute("data-tab");
+            setActiveTab(tab);
+          });
+        });
+    }
+
+    /* ---------- Eventos ---------- */
+
     document.getElementById("fuelForm").addEventListener("submit", function (e) {
       e.preventDefault();
 
@@ -830,7 +966,8 @@
     document.getElementById("reportVehicle").addEventListener("change", updateReport);
     document.getElementById("btnExport").addEventListener("click", exportCsv);
 
-    // PWA: registro do service worker
+    /* ---------- PWA: service worker ---------- */
+
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
         navigator.serviceWorker
@@ -839,7 +976,8 @@
       });
     }
 
-    // Inicialização
+    /* ---------- Inicialização ---------- */
+
     (function init() {
       const now = new Date();
       const year = now.getFullYear();
@@ -853,8 +991,11 @@
       renderEntries();
       renderVehicleFilter();
       updateReport();
+      initTabs();
     })();
   </script>
 </body>
 </html>
+
+
 

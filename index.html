@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Controle de Despesas do Carro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#7f4cef" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 16px;
+      background: #f5f5f7;
+      color: #111827;
+    }
+
+    .app-container {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 1.7rem;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: #6b7280;
+      margin-bottom: 16px;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title span {
+      font-size: 1.2rem;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #374151;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid #d1d5db;
+      font-size: 0.9rem;
+      outline: none;
+      background: #f9fafb;
+      transition: border 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    input:focus, select:focus {
+      border-color: #7f4cef;
+      background: #ffffff;
+      box-shadow: 0 0 0 1px #7f4cef33;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border-radius: 999px;
+      border: none;
+      font-size: 0.9rem;
+      padding: 8px 16px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: #7f4cef;
+      color: #ffffff;
+    }
+
+    .btn-primary:hover {
+      filter: brightness(0.95);
+    }
+
+    .btn-secondary {
+      background: #e5e7eb;
+      color: #374151;
+    }
+
+    .btn-secondary:hover {
+      filter: brightness(0.97);
+    }
+
+    .btn-small {
+      font-size: 0.8rem;
+      padding: 6px 12px;
+    }
+
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      min-width: 820px; /* força scroll no celular em vez de apertar tudo */
+    }
+
+    th, td {
+      padding: 8px 6px;
+      text-align: left;
+      border-bottom: 1px solid #e5e7eb;
+      vertical-align: top;
+    }
+
+    th {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: #6b7280;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .table-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .table-actions button {
+      font-size: 0.75rem;
+      padding: 4px 10px;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 16px 0;
+      color: #9ca3af;
+      font-size: 0.9rem;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      background: #eef2ff;
+      color: #3730a3;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 8px;
+      justify-content: space-between;
+    }
+
+    .toolbar-left {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: flex-end;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .summary-item {
+      background: #f9fafb;
+      border-radius: 10px;
+      padding: 8px 10px;
+    }
+
+    .summary-label {
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin-bottom: 2px;
+    }
+
+    .summary-value {
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <header style="margin-bottom: 16px;">
+      <h1>Controle de Despesas do Carro</h1>
+      <div class="subtitle">
+        Registre abastecimentos por veículo, informando apenas o km atual. O app calcula consumo, custo por km e resumo mensal.
+      </div>
+    </header>
+
+    <!-- FORMULÁRIO -->
+    <section class="card">
+      <div class="section-title">
+        <span>⛽</span> Novo abastecimento
+      </div>
+      <form id="fuelForm">
+        <input type="hidden" id="entryId" />
+        <div class="form-grid">
+          <div>
+            <label for="vehicle">Veículo (nome ou placa)</label>
+            <input id="vehicle" placeholder="Ex: ABC-1234 ou Corolla" required />
+          </div>
+          <div>
+            <label for="date">Data do abastecimento</label>
+            <input id="date" type="date" required />
+          </div>
+          <div>
+            <label for="fuelType">Tipo de combustível</label>
+            <select id="fuelType">
+              <option value="Gasolina">Gasolina</option>
+              <option value="Etanol">Etanol</option>
+              <option value="Diesel">Diesel</option>
+              <option value="GNV">GNV</option>
+            </select>
+          </div>
+          <div>
+            <label for="liters">Litros</label>
+            <input id="liters" type="number" step="0.01" min="0" placeholder="Ex: 45,50" required />
+          </div>
+          <div>
+            <label for="total">Total pago (R$)</label>
+            <input id="total" type="number" step="0.01" min="0" placeholder="Ex: 280,00" required />
+          </div>
+          <div>
+            <label for="odometer">Km atual (hodômetro)</label>
+            <input id="odometer" type="number" step="1" min="0" placeholder="Ex: 125430" required />
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn-secondary" id="btnClear">Limpar</button>
+          <button type="submit" class="btn-primary" id="btnSave">Salvar abastecimento</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- LISTA -->
+    <section class="card">
+      <div class="section-title">
+        <span>📋</span> Histórico de abastecimentos
+      </div>
+
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <span id="entryCount" style="font-size:0.8rem;color:#6b7280;"></span>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Veículo</th>
+              <th>Combustível</th>
+              <th>Litros / Total</th>
+              <th>Hodômetro</th>
+              <th>Km entre abastecimentos</th>
+              <th>Preço / L</th>
+              <th>Consumo</th>
+              <th>R$/km</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="entriesTableBody">
+            <!-- linhas via JS -->
+          </tbody>
+        </table>
+      </div>
+      <div class="empty" id="emptyState" style="display:none;">
+        Nenhum abastecimento cadastrado ainda.
+      </div>
+    </section>
+
+    <!-- RELATÓRIO MENSAL -->
+    <section class="card">
+      <div class="section-title">
+        <span>📆</span> Relatório mensal
+      </div>
+
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <div>
+            <label for="reportMonth" style="margin-bottom:2px;">Mês de referência</label>
+            <input id="reportMonth" type="month" />
+          </div>
+          <div>
+            <label for="reportVehicle" style="margin-bottom:2px;">Veículo</label>
+            <select id="reportVehicle">
+              <option value="all">Todos os veículos</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <button type="button" class="btn-secondary btn-small" id="btnExport">Exportar CSV</button>
+          <span class="pill" id="reportInfo">Selecione um mês para ver o resumo.</span>
+        </div>
+      </div>
+
+      <div class="summary-grid">
+        <div class="summary-item">
+          <div class="summary-label">Total gasto (R$)</div>
+          <div class="summary-value" id="sumTotal">R$ 0,00</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-label">Km rodados</div>
+          <div class="summary-value" id="sumKm">0 km</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-label">Litros abastecidos</div>
+          <div class="summary-value" id="sumLiters">0 L</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-label">Média de consumo</div>
+          <div class="summary-value" id="avgKmPerL">0 km/L</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-label">Custo médio por km</div>
+          <div class="summary-value" id="avgCostPerKm">R$ 0,00 / km</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "carExpensesEntries";
+
+    function loadEntries() {
+      try {
+        const data = localStorage.getItem(STORAGE_KEY);
+        return data ? JSON.parse(data) : [];
+      } catch (e) {
+        console.error("Erro ao carregar dados:", e);
+        return [];
+      }
+    }
+
+    function saveEntries(entries) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return "-";
+      const [year, month, day] = dateStr.split("-");
+      return `${day}/${month}/${year}`;
+    }
+
+    function formatCurrency(value) {
+      if (isNaN(value) || value === null) return "R$ 0,00";
+      return value.toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL"
+      });
+    }
+
+    function formatNumber(value, decimals = 2) {
+      if (isNaN(value) || value === null) return "0";
+      return value.toLocaleString("pt-BR", {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+      });
+    }
+
+    // Recalcula dados derivados respeitando veículo + ordem por data
+    function recalcAll(entries) {
+      const sorted = [...entries].sort((a, b) => {
+        const va = (a.vehicle || "").toLowerCase();
+        const vb = (b.vehicle || "").toLowerCase();
+        if (va !== vb) return va.localeCompare(vb);
+
+        const da = a.date || "";
+        const db = b.date || "";
+        if (da !== db) return da.localeCompare(db);
+
+        const ka = a.createdAt || a.id || "";
+        const kb = b.createdAt || b.id || "";
+        return ka.localeCompare(kb);
+      });
+
+      const previousByVehicle = {};
+
+      sorted.forEach(entry => {
+        const vehicle = entry.vehicle || "";
+        const liters = Number(entry.liters) || 0;
+        const total = Number(entry.total) || 0;
+        const odometer = Number(entry.odometer) || 0;
+
+        let kmDriven = 0;
+        const prev = previousByVehicle[vehicle];
+        if (prev != null && odometer > prev) {
+          kmDriven = odometer - prev;
+        }
+
+        entry.kmDriven = kmDriven;
+        entry.pricePerLiter = liters > 0 ? total / liters : 0;
+        entry.kmPerLiter   = liters > 0 ? (kmDriven / liters) : 0;
+        entry.costPerKm    = kmDriven > 0 ? (total / kmDriven) : 0;
+
+        if (odometer > 0 && (prev == null || odometer > prev)) {
+          previousByVehicle[vehicle] = odometer;
+        }
+      });
+
+      return entries;
+    }
+
+    function clearForm() {
+      document.getElementById("entryId").value = "";
+      document.getElementById("vehicle").value = "";
+      document.getElementById("date").value = "";
+      document.getElementById("fuelType").value = "Gasolina";
+      document.getElementById("liters").value = "";
+      document.getElementById("total").value = "";
+      document.getElementById("odometer").value = "";
+      document.getElementById("btnSave").textContent = "Salvar abastecimento";
+    }
+
+    function fillFormForEdit(id) {
+      const entries = loadEntries();
+      const entry = entries.find(e => e.id === id);
+      if (!entry) return;
+
+      document.getElementById("entryId").value = entry.id;
+      document.getElementById("vehicle").value = entry.vehicle || "";
+      document.getElementById("date").value = entry.date || "";
+      document.getElementById("fuelType").value = entry.fuelType || "Gasolina";
+      document.getElementById("liters").value = entry.liters ?? "";
+      document.getElementById("total").value = entry.total ?? "";
+      document.getElementById("odometer").value = entry.odometer ?? "";
+      document.getElementById("btnSave").textContent = "Atualizar abastecimento";
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function deleteEntry(id) {
+      if (!confirm("Excluir este abastecimento?")) return;
+      let entries = loadEntries();
+      entries = entries.filter(e => e.id !== id);
+      entries = recalcAll(entries);
+      saveEntries(entries);
+      renderEntries();
+      renderVehicleFilter();
+      updateReport();
+    }
+
+    function renderEntries() {
+      const tbody = document.getElementById("entriesTableBody");
+      const emptyState = document.getElementById("emptyState");
+      const entries = loadEntries();
+
+      const sorted = [...entries].sort((a, b) => {
+        const da = a.date || "";
+        const db = b.date || "";
+        if (da !== db) return db.localeCompare(da);
+
+        const va = (a.vehicle || "").toLowerCase();
+        const vb = (b.vehicle || "").toLowerCase();
+        if (va !== vb) return va.localeCompare(vb);
+
+        const ka = a.createdAt || a.id || "";
+        const kb = b.createdAt || b.id || "";
+        return kb.localeCompare(ka);
+      });
+
+      tbody.innerHTML = "";
+
+      document.getElementById("entryCount").textContent =
+        sorted.length ? `${sorted.length} abastecimento(s) registrado(s)` : "";
+
+      if (!sorted.length) {
+        emptyState.style.display = "block";
+        return;
+      } else {
+        emptyState.style.display = "none";
+      }
+
+      sorted.forEach(entry => {
+        const tr = document.createElement("tr");
+
+        const tdDate = document.createElement("td");
+        tdDate.textContent = formatDate(entry.date);
+
+        const tdVehicle = document.createElement("td");
+        tdVehicle.textContent = entry.vehicle || "-";
+
+        const tdFuel = document.createElement("td");
+        tdFuel.textContent = entry.fuelType || "-";
+
+        const tdLitersTotal = document.createElement("td");
+        tdLitersTotal.innerHTML =
+          `${formatNumber(entry.liters, 2)} L<br>` +
+          `<span style="color:#6b7280;">${formatCurrency(entry.total)}</span>`;
+
+        const tdOdo = document.createElement("td");
+        tdOdo.textContent = entry.odometer
+          ? `${formatNumber(entry.odometer, 0)} km`
+          : "-";
+
+        const tdKm = document.createElement("td");
+        tdKm.textContent = entry.kmDriven
+          ? `${formatNumber(entry.kmDriven, 1)} km`
+          : "-";
+
+        const tdPricePerL = document.createElement("td");
+        tdPricePerL.textContent =
+          entry.pricePerLiter ? `${formatCurrency(entry.pricePerLiter)} / L` : "-";
+
+        const tdKmPerL = document.createElement("td");
+        tdKmPerL.textContent =
+          entry.kmPerLiter ? `${formatNumber(entry.kmPerLiter, 2)} km/L` : "-";
+
+        const tdCostPerKm = document.createElement("td");
+        tdCostPerKm.textContent =
+          entry.costPerKm ? `${formatCurrency(entry.costPerKm)} / km` : "-";
+
+        const tdActions = document.createElement("td");
+        const actionsDiv = document.createElement("div");
+        actionsDiv.className = "table-actions";
+
+        const btnEdit = document.createElement("button");
+        btnEdit.className = "btn-secondary";
+        btnEdit.textContent = "Editar";
+        btnEdit.onclick = () => fillFormForEdit(entry.id);
+
+        const btnDelete = document.createElement("button");
+        btnDelete.className = "btn-secondary";
+        btnDelete.textContent = "Excluir";
+        btnDelete.onclick = () => deleteEntry(entry.id);
+
+        actionsDiv.appendChild(btnEdit);
+        actionsDiv.appendChild(btnDelete);
+        tdActions.appendChild(actionsDiv);
+
+        tr.appendChild(tdDate);
+        tr.appendChild(tdVehicle);
+        tr.appendChild(tdFuel);
+        tr.appendChild(tdLitersTotal);
+        tr.appendChild(tdOdo);
+        tr.appendChild(tdKm);
+        tr.appendChild(tdPricePerL);
+        tr.appendChild(tdKmPerL);
+        tr.appendChild(tdCostPerKm);
+        tr.appendChild(tdActions);
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderVehicleFilter() {
+      const select = document.getElementById("reportVehicle");
+      const entries = loadEntries();
+      const vehicles = Array.from(
+        new Set(entries.map(e => e.vehicle).filter(v => v && v.trim() !== ""))
+      ).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+
+      const current = select.value || "all";
+      select.innerHTML = '<option value="all">Todos os veículos</option>';
+
+      vehicles.forEach(v => {
+        const opt = document.createElement("option");
+        opt.value = v;
+        opt.textContent = v;
+        select.appendChild(opt);
+      });
+
+      if (vehicles.includes(current)) {
+        select.value = current;
+      } else {
+        select.value = "all";
+      }
+    }
+
+    function updateReport() {
+      const monthInput = document.getElementById("reportMonth");
+      const monthValue = monthInput.value;
+      const vehicleFilter = document.getElementById("reportVehicle").value;
+      const entries = loadEntries();
+
+      const info = document.getElementById("reportInfo");
+      const sumTotalEl = document.getElementById("sumTotal");
+      const sumKmEl = document.getElementById("sumKm");
+      const sumLitersEl = document.getElementById("sumLiters");
+      const avgKmPerLEl = document.getElementById("avgKmPerL");
+      const avgCostPerKmEl = document.getElementById("avgCostPerKm");
+
+      if (!monthValue) {
+        info.textContent = "Selecione um mês para ver o resumo.";
+        sumTotalEl.textContent = "R$ 0,00";
+        sumKmEl.textContent = "0 km";
+        sumLitersEl.textContent = "0 L";
+        avgKmPerLEl.textContent = "0 km/L";
+        avgCostPerKmEl.textContent = "R$ 0,00 / km";
+        return;
+      }
+
+      const filtered = entries.filter(e => {
+        if (!e.date || !e.date.startsWith(monthValue)) return false;
+        if (vehicleFilter === "all") return true;
+        return e.vehicle === vehicleFilter;
+      });
+
+      const veicLabel =
+        vehicleFilter === "all" ? "todos os veículos" : `veículo ${vehicleFilter}`;
+
+      info.textContent =
+        filtered.length
+          ? `${filtered.length} abastecimento(s) neste mês para ${veicLabel}.`
+          : `Nenhum abastecimento neste mês para ${veicLabel}.`;
+
+      const sumTotal = filtered.reduce((acc, e) => acc + (Number(e.total) || 0), 0);
+      const sumKm = filtered.reduce((acc, e) => acc + (Number(e.kmDriven) || 0), 0);
+      const sumLiters = filtered.reduce((acc, e) => acc + (Number(e.liters) || 0), 0);
+
+      const avgKmPerL = sumLiters > 0 ? sumKm / sumLiters : 0;
+      const avgCostPerKm = sumKm > 0 ? sumTotal / sumKm : 0;
+
+      sumTotalEl.textContent = formatCurrency(sumTotal);
+      sumKmEl.textContent = `${formatNumber(sumKm, 1)} km`;
+      sumLitersEl.textContent = `${formatNumber(sumLiters, 2)} L`;
+      avgKmPerLEl.textContent = `${formatNumber(avgKmPerL, 2)} km/L`;
+      avgCostPerKmEl.textContent = `${formatCurrency(avgCostPerKm)} / km`;
+    }
+
+    function exportCsv() {
+      const monthValue = document.getElementById("reportMonth").value;
+      const vehicleFilter = document.getElementById("reportVehicle").value;
+      const entries = loadEntries();
+
+      if (!monthValue) {
+        alert("Selecione um mês antes de exportar.");
+        return;
+      }
+
+      const filtered = entries.filter(e => {
+        if (!e.date || !e.date.startsWith(monthValue)) return false;
+        if (vehicleFilter === "all") return true;
+        return e.vehicle === vehicleFilter;
+      });
+
+      if (!filtered.length) {
+        alert("Não há registros para exportar com os filtros selecionados.");
+        return;
+      }
+
+      const header = [
+        "Data",
+        "Veículo",
+        "Combustível",
+        "Litros",
+        "Total (R$)",
+        "Hodômetro",
+        "Km entre abastecimentos",
+        "Preço por litro (R$/L)",
+        "Consumo (km/L)",
+        "Custo por km (R$/km)"
+      ].join(";");
+
+      const rows = filtered.map(e => {
+        const date = formatDate(e.date);
+        const vehicle = e.vehicle || "";
+        const fuel = e.fuelType || "";
+        const liters = Number(e.liters) || 0;
+        const total = Number(e.total) || 0;
+        const odo = Number(e.odometer) || 0;
+        const km = Number(e.kmDriven) || 0;
+        const ppl = Number(e.pricePerLiter) || 0;
+        const kml = Number(e.kmPerLiter) || 0;
+        const cpk = Number(e.costPerKm) || 0;
+
+        function num(v) {
+          return isNaN(v) ? "" : v.toFixed(3);
+        }
+
+        return [
+          date,
+          vehicle,
+          fuel,
+          num(liters),
+          num(total),
+          num(odo),
+          num(km),
+          num(ppl),
+          num(kml),
+          num(cpk)
+        ].join(";");
+      });
+
+      const csvContent = [header, ...rows].join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+
+      const vehPart =
+        vehicleFilter === "all"
+          ? "todos"
+          : (vehicleFilter || "veiculo").replace(/\W+/g, "_");
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `abastecimentos_${monthValue}_${vehPart}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // Eventos
+    document.getElementById("fuelForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const id = document.getElementById("entryId").value;
+      const vehicle = document.getElementById("vehicle").value.trim();
+      const date = document.getElementById("date").value;
+      const fuelType = document.getElementById("fuelType").value;
+      const liters = Number(String(document.getElementById("liters").value).replace(",", "."));
+      const total = Number(String(document.getElementById("total").value).replace(",", "."));
+      const odometer = Number(String(document.getElementById("odometer").value).replace(",", "."));
+
+      if (!vehicle) {
+        alert("Informe o veículo (nome ou placa).");
+        return;
+      }
+      if (!date) {
+        alert("Informe a data do abastecimento.");
+        return;
+      }
+      if (!(liters > 0)) {
+        alert("Informe a quantidade de litros.");
+        return;
+      }
+      if (!(total > 0)) {
+        alert("Informe o total pago.");
+        return;
+      }
+      if (!(odometer >= 0)) {
+        alert("Informe o km atual do hodômetro.");
+        return;
+      }
+
+      let entries = loadEntries();
+
+      if (id) {
+        entries = entries.map(e => {
+          if (e.id === id) {
+            return {
+              ...e,
+              vehicle,
+              date,
+              fuelType,
+              liters,
+              total,
+              odometer
+            };
+          }
+          return e;
+        });
+      } else {
+        const newEntry = {
+          id: Date.now().toString(),
+          vehicle,
+          date,
+          fuelType,
+          liters,
+          total,
+          odometer,
+          createdAt: new Date().toISOString()
+        };
+        entries.push(newEntry);
+      }
+
+      entries = recalcAll(entries);
+      saveEntries(entries);
+      clearForm();
+      renderEntries();
+      renderVehicleFilter();
+      updateReport();
+    });
+
+    document.getElementById("btnClear").addEventListener("click", clearForm);
+    document.getElementById("reportMonth").addEventListener("change", updateReport);
+    document.getElementById("reportVehicle").addEventListener("change", updateReport);
+    document.getElementById("btnExport").addEventListener("click", exportCsv);
+
+    // PWA: registro do service worker
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker
+          .register("sw.js")
+          .catch(err => console.error("Service worker error:", err));
+      });
+    }
+
+    // Inicialização
+    (function init() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const monthInput = document.getElementById("reportMonth");
+      monthInput.value = `${year}-${month}`;
+
+      const entries = recalcAll(loadEntries());
+      saveEntries(entries);
+
+      renderEntries();
+      renderVehicleFilter();
+      updateReport();
+    })();
+  </script>
+</body>
+</html>
+
